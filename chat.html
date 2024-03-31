@@ -15,29 +15,34 @@
             height: 100vh;
             background-color: #f0f0f0;
         }
+
         #chat-container {
             width: 60%;
-            max-width: 600px;
+            max-width: 1000px;
             background-color: white;
             border: 1px solid #ddd;
             border-radius: 5px;
             overflow: hidden;
         }
+
         #response-box {
-            height: 300px;
+            height: 85vh;
             overflow-y: auto;
             border-bottom: 1px solid #ddd;
             padding: 20px;
         }
+
         #input-box {
             display: flex;
         }
+
         #user-input {
             flex: 1;
             border: none;
             padding: 10px;
             font-size: 16px;
         }
+
         #send-button {
             background-color: #007bff;
             color: white;
@@ -45,12 +50,124 @@
             padding: 10px 15px;
             cursor: pointer;
         }
+
         #send-button:hover {
             background-color: #0056b3;
+        }
+
+        #response-box table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        #response-box table, 
+        #response-box th, 
+        #response-box td {
+            border: 1px solid black;
+        }
+
+        #response-box th {
+            font-weight: bold;
+            background-color: #f2f2f2;
+        }
+
+        #response-box .user, #response-box .chatbot, #response-box .error {
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        #response-box .user {
+            background-color: #f0f8ff; 
+            text-align: left;
+        }
+
+        #response-box .user::before {
+            content: "사용자: ";
+            font-weight: bold;
+        }
+
+        #response-box .chatbot {
+            background-color: #e0ffff; 
+            text-align: left;
+        }
+
+        #response-box .chatbot::before {
+            content: "챗봇: ";
+            font-weight: bold;
+        }
+
+        #response-box .error {
+            background-color: #ffe0e0; 
+            text-align: left;
+        }
+
+        #response-box .error::before {
+            content: "오류: ";
+            font-weight: bold;
+            color: #ff0000; 
+        }
+
+        .product-card {
+            display: inline-block;
+            vertical-align: top;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px;
+            height: 300px;
+            width: 200px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .product-card img {
+            max-width: 100%;
+            height: 200px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .product-card div {
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .product-card a {
+            text-decoration: none;
+            color: black;
+            display: block;
+            height: 100%;
+        }
+
+        .product-card .title {
+            white-space: nowrap; 
+            overflow: hidden;
+            text-overflow: ellipsis; 
+            max-width: 100%;
+        }
+
+        .product-card .description {
+            color: gray;
+            max-width: 100%;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .styled-paragraph {
+            font-size: 36px;
+            font-weight: bold;
+            color: blue;
         }
     </style>
 </head>
 <body>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <div id="chat-container">
         <div id="response-box">
             <!-- Server responses will be displayed here -->
@@ -60,9 +177,98 @@
             <button id="send-button">Send</button>
         </div>
     </div>
+    
     <script>
-        // You'll need to add JavaScript here to handle message sending and receiving.
-        // This part would typically involve making an AJAX request to a server.
+        document.getElementById('send-button').addEventListener('click', function() {
+            sendMessage();
+        });
+
+        document.getElementById('user-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            var userInput = document.getElementById('user-input');
+            if (!userInput.value) return;
+            renderUserInput(userInput.value);
+            fetch(`/data/${userInput.value}-markdown.json`).then(res => res.json()).then(renderMarkdownResponse).catch(renderError);
+            userInput.value = '';
+        }
+
+        function renderUserInput(text) {
+            var responseBox = document.getElementById('response-box');
+            var div = document.createElement('div');
+            div.className = 'user';
+            div.innerText = text;
+            responseBox.appendChild(div);
+            responseBox.scrollTop = responseBox.scrollHeight;
+        }
+
+        function renderMarkdownResponse(json) {
+            var responseBox = document.getElementById('response-box');
+            var div = document.createElement('div');
+            div.className = 'chatbot';
+            div.innerHTML = marked.parse(json.text);
+            responseBox.appendChild(div);
+            responseBox.scrollTop = responseBox.scrollHeight;
+        }
+
+        function renderError(err) {
+            var responseBox = document.getElementById('response-box');
+            var div = document.createElement('div');
+            div.className = 'error';
+            div.innerText = err;
+            // responseBox.innerHTML = '';
+            responseBox.appendChild(div);
+            responseBox.scrollTop = responseBox.scrollHeight;
+        }
+
+        async function createProductElement(url) {
+            const response = await fetch(url);
+            const text = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(text, 'text/html');
+
+            var thumbnail = doc.querySelector('meta[name="thumbnail"]')?.content;
+            if (!thumbnail) thumbnail = doc.querySelector('meta[property="og:image"]')?.content;
+            var title = doc.querySelector('meta[property="og:title"]')?.content;
+            var description = doc.querySelector('meta[property="og:description"]')?.content;
+
+            var div = document.createElement('div');
+            div.className = 'product-card';
+            div.innerHTML = `
+                <a href="${url}" target="_blank">
+                    <img class="thumbnail" src="${thumbnail}" alt="${title}">
+                    <div class="title"><strong>${title}</strong></div>
+                    <div class="description">${description}</div>
+                </a>`;
+            
+            return div;
+        }
+
+        function initializeObserver() {
+            var responseBox = document.getElementById('response-box');
+            const observer = new MutationObserver(mutations => {
+                mutations.forEach(mutation => {
+                    mutation.addedNodes.forEach(node => {
+                        node.querySelector('p')?.classList?.add('styled-paragraph');
+
+                        Array.from(node.getElementsByTagName('product')).forEach(node => {
+                            createProductElement(node.innerText).then(div => {
+                                node.parentNode.replaceChild(div, node);
+                                responseBox.scrollTop = responseBox.scrollHeight;
+                            })
+                        });
+                    });
+                });
+            });
+
+            observer.observe(responseBox, { childList: true });
+        }
+
+        initializeObserver();
     </script>
 </body>
 </html>
