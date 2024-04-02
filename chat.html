@@ -383,7 +383,7 @@
             var responseBox = document.getElementById('response-box');
             const observer = new MutationObserver(mutations => {
                 mutations.forEach(mutation => {
-                    // Asynchronously renders the UI of the card tags in the child nodes.
+                    // Asynchronously renders the UI of the ref tags in the child nodes.
                     mutation.addedNodes.forEach(node => {
                         Array.from(node.getElementsByTagName('ref')).forEach(renderRefPreview);
                     });
