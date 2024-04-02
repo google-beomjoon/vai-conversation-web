@@ -180,21 +180,34 @@
     
     <script>
         document.getElementById('send-button').addEventListener('click', function() {
-            sendMessage();
+            sendMessage(document.getElementById('user-input').value);
+            document.getElementById('user-input').value = '';
         });
 
         document.getElementById('user-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                sendMessage();
+                sendMessage(document.getElementById('user-input').value);
+                document.getElementById('user-input').value = '';
             }
         });
 
-        function sendMessage() {
-            var userInput = document.getElementById('user-input');
-            if (!userInput.value) return;
-            renderUserInput(userInput.value);
-            fetch(`/data/${userInput.value}-markdown.json`).then(res => res.json()).then(renderMarkdownResponse).catch(renderError);
-            userInput.value = '';
+        function scrollToBottom() {
+            const responseBox = document.getElementById('response-box');
+            responseBox.scrollTop = responseBox.scrollHeight
+        }
+
+        function sendMessage(text) {
+            if (!text) return;
+            renderUserInput(text);
+            scrollToBottom();
+            fetch(`https://benevolent-paprenjak-3a5114.netlify.app/data/${text}-markdown.json`)
+                .then(res => res.json())
+                .then(json => {
+                    renderMarkdownResponse(json.text);
+                    renderRelatedQuestions(json.related_questions);
+                })
+                .catch(renderError)
+                .finally(scrollToBottom);
         }
 
         function renderUserInput(text) {
@@ -203,16 +216,29 @@
             div.className = 'user';
             div.innerText = text;
             responseBox.appendChild(div);
-            responseBox.scrollTop = responseBox.scrollHeight;
         }
 
-        function renderMarkdownResponse(json) {
+        function renderMarkdownResponse(markdown) {
             var responseBox = document.getElementById('response-box');
             var div = document.createElement('div');
             div.className = 'chatbot';
-            div.innerHTML = marked.parse(json.text);
+            div.innerHTML = marked.parse(markdown);
             responseBox.appendChild(div);
-            responseBox.scrollTop = responseBox.scrollHeight;
+        }
+
+        function renderRelatedQuestions(releated_questions) {
+            console.log(releated_questions);
+            if (!releated_questions) return;
+            var responseBox = document.getElementById('response-box');
+            var ul = document.createElement('ul');
+            ul.className = "related-questions"
+            releated_questions.forEach(text => {
+                var li = document.createElement('li');
+                li.textContent = text;
+                li.addEventListener('click', () => sendMessage(text));
+                ul.appendChild(li);
+            })
+            responseBox.appendChild(ul);
         }
 
         function renderError(err) {
@@ -220,55 +246,105 @@
             var div = document.createElement('div');
             div.className = 'error';
             div.innerText = err;
-            // responseBox.innerHTML = '';
             responseBox.appendChild(div);
-            responseBox.scrollTop = responseBox.scrollHeight;
         }
 
-        async function createProductElement(url) {
-            const response = await fetch(url);
-            const text = await response.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(text, 'text/html');
+        // function processPostRendering(node) {
+        //     // Highlights the first paragraph
+        //     highlightParagraph(node.querySelector('p'));
 
-            var thumbnail = doc.querySelector('meta[name="thumbnail"]')?.content;
-            if (!thumbnail) thumbnail = doc.querySelector('meta[property="og:image"]')?.content;
-            var title = doc.querySelector('meta[property="og:title"]')?.content;
-            var description = doc.querySelector('meta[property="og:description"]')?.content;
+        //     // Renders the UI for the card tags in the child nodes.
+        //     Array.from(node.getElementsByTagName('card')).forEach(renderCard
 
-            var div = document.createElement('div');
-            div.className = 'product-card';
-            div.innerHTML = `
-                <a href="${url}" target="_blank">
-                    <img class="thumbnail" src="${thumbnail}" alt="${title}">
-                    <div class="title"><strong>${title}</strong></div>
-                    <div class="description">${description}</div>
-                </a>`;
+        //     // Fetches the metadata of the URL in the card tag and dynamically renders the card UI
+
+
+        // }
+
+        // function highlightParagraph(node) {
+        //     node.querySelector('p')?.classList.add('highlight');
+        // }
+
+        // function renderCardUI(node) {
+        //     cards = Array.from(node.getElementsByTagName('card'));
+        //     promises = cards.map(async (card) => {
+        //         var url = card.innerText;
+        //         var {thumbnail, title, description} = await fetchMetadataForCard(url);
+
+        //         var div = document.createElement('div');
+        //         div.className = 'card';
+        //         div.innerHTML = `
+        //             <a href="${url}" target="_blank">
+        //                 <img class="thumbnail" src="${thumbnail}" alt="${title}">
+        //                 <div class="title"><strong>${title}</strong></div>
+        //                 <div class="description">${description}</div>
+        //             </a>`;
+        //         card.parentNode.replaceChild(div, card);
+        //     });
+
+        //     await Promise.all(promises).then(() => {
+        //         responseBox.scrollTop = responseBox.scrollHeight;
+        //     });
+        // }
+
+        // async function fetchMetadataForCard(url) {
+        //     const response = await fetch(url);
+        //     const text = await response.text();
+        //     const parser = new DOMParser();
+        //     const doc = parser.parseFromString(text, 'text/html');
+
+        //     var thumbnail = doc.querySelector('meta[name="thumbnail"]')?.content;
+        //     if (!thumbnail) thumbnail = doc.querySelector('meta[property="og:image"]')?.content;
+        //     var title = doc.querySelector('meta[property="og:title"]')?.content;
+        //     var description = doc.querySelector('meta[property="og:description"]')?.content;
+
+        //     return {thumbnail, title, description};
+        // }
+
+        // async function createProductElement(url) {
+        //     const response = await fetch(url);
+        //     const text = await response.text();
+        //     const parser = new DOMParser();
+        //     const doc = parser.parseFromString(text, 'text/html');
+
+        //     var thumbnail = doc.querySelector('meta[name="thumbnail"]')?.content;
+        //     if (!thumbnail) thumbnail = doc.querySelector('meta[property="og:image"]')?.content;
+        //     var title = doc.querySelector('meta[property="og:title"]')?.content;
+        //     var description = doc.querySelector('meta[property="og:description"]')?.content;
+
+        //     var div = document.createElement('div');
+        //     div.className = 'product-card';
+        //     div.innerHTML = `
+        //         <a href="${url}" target="_blank">
+        //             <img class="thumbnail" src="${thumbnail}" alt="${title}">
+        //             <div class="title"><strong>${title}</strong></div>
+        //             <div class="description">${description}</div>
+        //         </a>`;
             
-            return div;
-        }
+        //     return div;
+        // }
 
-        function initializeObserver() {
-            var responseBox = document.getElementById('response-box');
-            const observer = new MutationObserver(mutations => {
-                mutations.forEach(mutation => {
-                    mutation.addedNodes.forEach(node => {
-                        node.querySelector('p')?.classList?.add('styled-paragraph');
+        // function initializeObserver() {
+        //     var responseBox = document.getElementById('response-box');
+        //     const observer = new MutationObserver(mutations => {
+        //         mutations.forEach(mutation => {
+        //             mutation.addedNodes.forEach(node => {
+        //                 node.querySelector('p')?.classList?.add('styled-paragraph');
 
-                        Array.from(node.getElementsByTagName('product')).forEach(node => {
-                            createProductElement(node.innerText).then(div => {
-                                node.parentNode.replaceChild(div, node);
-                                responseBox.scrollTop = responseBox.scrollHeight;
-                            })
-                        });
-                    });
-                });
-            });
+        //                 Array.from(node.getElementsByTagName('product')).forEach(node => {
+        //                     createProductElement(node.innerText).then(div => {
+        //                         node.parentNode.replaceChild(div, node);
+        //                         responseBox.scrollTop = responseBox.scrollHeight;
+        //                     })
+        //                 });
+        //             });
+        //         });
+        //     });
 
-            observer.observe(responseBox, { childList: true });
-        }
+        //     observer.observe(responseBox, { childList: true });
+        // }
 
-        initializeObserver();
+        // initializeObserver();
     </script>
 </body>
 </html>
