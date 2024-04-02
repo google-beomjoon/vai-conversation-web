@@ -15,7 +15,7 @@
 export default async (request, context) => {
 	try {
 		const body = await request.json();
-		const url = "https://semiconductor.samsung.com/processor/mobile-processor/exynos-2400/"; // body.url;
+		const url = "https://benevolent-paprenjak-3a5114.netlify.app/products/exynos-2400/"; // body.url;
 		const response = await fetch(url);
 		const text = await response.text();
 		const parser = new DOMParser();
