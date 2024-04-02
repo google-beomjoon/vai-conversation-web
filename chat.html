@@ -206,35 +206,23 @@
     </div>
     
     <script>
-        document.getElementById('send-button').addEventListener('click', function() {
-            sendMessage(document.getElementById('user-input').value);
-            document.getElementById('user-input').value = '';
-        });
-
-        document.getElementById('user-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage(document.getElementById('user-input').value);
-                document.getElementById('user-input').value = '';
+        function handleSendMessage() {
+            const inputBox = document.getElementById('user-input');
+            if (inputBox.value) {
+                sendMessage(inputBox.value);
+                inputBox.value = '';
             }
-        });
-
-        function scrollToBottom() {
-            const responseBox = document.getElementById('response-box');
-            responseBox.scrollTop = responseBox.scrollHeight
         }
 
         function sendMessage(text) {
-            if (!text) return;
             renderUserInput(text);
-            scrollToBottom();
             fetch(`/data/${text}-markdown.json`)
                 .then(res => res.json())
                 .then(json => {
                     renderMarkdownResponse(json.text);
                     renderRelatedQuestions(json.related_questions);
                 })
-                .catch(renderError)
-                .finally(scrollToBottom);
+                .catch(renderError);
         }
 
         function renderUserInput(text) {
@@ -250,10 +238,8 @@
             var div = document.createElement('div');
             div.className = 'chatbot';
             div.innerHTML = marked.parse(markdown);
-
             // Highlights the first paragraph
             div.querySelector('p')?.classList.add('highlight');
-
             responseBox.appendChild(div);
         }
 
@@ -295,7 +281,6 @@
                         <div class="description">${description}</div>
                     </a>`;
                 card.parentNode.replaceChild(div, card);
-                scrollToBottom();
             });
         }
 
@@ -320,11 +305,24 @@
                     // Asynchronously renders the UI of the card tags in the child nodes.
                     mutation.addedNodes.forEach(renderCards);
                 });
+                responseBox.scrollTop = responseBox.scrollHeight;
             });
             observer.observe(responseBox, { childList: true });
         }
 
-        initializeObserver();
+        function initializeChat() {
+            const inputBox = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+
+            sendButton.addEventListener('click', () => handleSendMessage());
+            inputBox.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSendMessage();
+            });
+
+            initializeObserver();
+        }
+
+        initializeChat();
     </script>
 </body>
 </html>
