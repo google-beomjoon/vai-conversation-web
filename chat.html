@@ -65,7 +65,7 @@
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
-            background-color: #ffffff;
+            background-color: white;
         }
 
         #response-box th {
@@ -160,12 +160,18 @@
             display: inline-block;
             vertical-align: top;
             border: 1px solid #ddd;
+            background-color: white;
             border-radius: 5px;
             padding: 10px;
             margin: 5px;
             height: 300px;
             width: 200px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: box-shadow 0.3s;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.6);
         }
 
         .card img {
@@ -236,7 +242,7 @@
         function sendMessage(text) {
             renderUserInput(text);
             // Calls the backend API to obtain the chatbot's response to user input.
-            fetch(`/data/${text}-markdown.json`)
+            fetch(`https://benevolent-paprenjak-3a5114.netlify.app/data/${text}-markdown.json`)
                 .then(res => res.json())
                 .then(json => {
                     renderMarkdownResponse(json.text);
