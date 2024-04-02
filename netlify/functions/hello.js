@@ -14,19 +14,8 @@
 
 export default async (request, context) => {
 	try {
-		const body = await request.json();
-		const url = "https://benevolent-paprenjak-3a5114.netlify.app/products/exynos-2400/"; // body.url;
-		const response = await fetch(url);
-		const text = await response.text();
-		const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
-
-        var thumbnail = doc.querySelector('meta[name="thumbnail"]')?.content;
-		if (!thumbnail) thumbnail = doc.querySelector('meta[property="og:image"]')?.content;
-        var title = doc.querySelector('meta[property="og:title"]')?.content;
-        var description = doc.querySelector('meta[property="og:description"]')?.content;
-
-		return Response.json({ thumbnail, title, description });
+		const json = fs.readFileSync(require.resolve('/data/scen1-markdown.json'));
+		return Response.json({ res: json });
 	} catch (error) {
 		return Response.json({ error }, { status: 500 });
 	}
