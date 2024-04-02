@@ -14,7 +14,7 @@
 
 export default async (request, context) => {
 	try {
-		const body = request.body;
+		const body = await request.json();
 		return Response.json({ resData: body });
 	} catch (error) {
 		return Response.json({ error }, { status: 500 });
