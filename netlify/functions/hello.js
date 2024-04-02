@@ -17,7 +17,7 @@ export default async (request, context) => {
 	try {
 		const filePath = path.join(__dirname, 'data', 'scen1-markdown.json');
 		const data = fs.readFileSync(filePath, 'utf-8');
-		return Response.json({ res: data });
+		return Response.json(data);
 	} catch (error) {
 		return Response.json({ error }, { status: 500 });
 	}
