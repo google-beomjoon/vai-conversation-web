@@ -71,7 +71,9 @@
             background-color: #f2f2f2;
         }
 
-        #response-box .user, #response-box .chatbot, #response-box .error {
+        #response-box .user, 
+        #response-box .chatbot, 
+        #response-box .error {
             border-radius: 10px;
             padding: 10px;
             margin-bottom: 10px;
@@ -110,7 +112,32 @@
             color: #ff0000; 
         }
 
-        .product-card {
+        #response-box .related-questions {
+            list-style-type: none;
+            font-size: 0.9em;
+            line-height: 1.4;
+            padding: 0;
+            text-align: left;
+        }
+
+        #response-box .related-questions li {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #response-box .related-questions li:hover {
+            background-color: #e0e0e0;
+        }
+
+        #response-box .related-questions::before {
+            content: "관련 질문: ";
+            font-weight: bold;
+        }
+
+        .card {
             display: inline-block;
             vertical-align: top;
             border: 1px solid #ddd;
@@ -122,33 +149,33 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
-        .product-card img {
+        .card img {
             max-width: 100%;
             height: 200px;
             border-radius: 5px;
             margin-bottom: 10px;
         }
 
-        .product-card div {
+        .card div {
             margin-bottom: 5px;
             font-size: 0.9em;
         }
 
-        .product-card a {
+        .card a {
             text-decoration: none;
             color: black;
             display: block;
             height: 100%;
         }
 
-        .product-card .title {
+        .card .title {
             white-space: nowrap; 
             overflow: hidden;
             text-overflow: ellipsis; 
             max-width: 100%;
         }
 
-        .product-card .description {
+        .card .description {
             color: gray;
             max-width: 100%;
             display: -webkit-box;
@@ -158,7 +185,7 @@
             text-overflow: ellipsis;
         }
 
-        .styled-paragraph {
+        .highlight {
             font-size: 36px;
             font-weight: bold;
             color: blue;
@@ -200,7 +227,7 @@
             if (!text) return;
             renderUserInput(text);
             scrollToBottom();
-            fetch(`https://benevolent-paprenjak-3a5114.netlify.app/data/${text}-markdown.json`)
+            fetch(`/data/${text}-markdown.json`)
                 .then(res => res.json())
                 .then(json => {
                     renderMarkdownResponse(json.text);
@@ -223,11 +250,14 @@
             var div = document.createElement('div');
             div.className = 'chatbot';
             div.innerHTML = marked.parse(markdown);
+
+            // Highlights the first paragraph
+            div.querySelector('p')?.classList.add('highlight');
+
             responseBox.appendChild(div);
         }
 
         function renderRelatedQuestions(releated_questions) {
-            console.log(releated_questions);
             if (!releated_questions) return;
             var responseBox = document.getElementById('response-box');
             var ul = document.createElement('ul');
@@ -249,102 +279,52 @@
             responseBox.appendChild(div);
         }
 
-        // function processPostRendering(node) {
-        //     // Highlights the first paragraph
-        //     highlightParagraph(node.querySelector('p'));
+        async function renderCards(node) {
+            cards = Array.from(node.getElementsByTagName('card'));
+            cards.forEach(async (card) => {
+                const url = card.innerText;
+                // Fetches some metadata from the URL and dynamically renders the card UI
+                const {thumbnail, title, description} = await fetchMetadataForCard(url);
+                
+                var div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <a href="${url}" target="_blank">
+                        <img class="thumbnail" src="${thumbnail}" alt="${title}">
+                        <div class="title"><strong>${title}</strong></div>
+                        <div class="description">${description}</div>
+                    </a>`;
+                card.parentNode.replaceChild(div, card);
+                scrollToBottom();
+            });
+        }
 
-        //     // Renders the UI for the card tags in the child nodes.
-        //     Array.from(node.getElementsByTagName('card')).forEach(renderCard
+        async function fetchMetadataForCard(url) {
+            const response = await fetch(url);
+            const text = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(text, 'text/html');
 
-        //     // Fetches the metadata of the URL in the card tag and dynamically renders the card UI
+            var thumbnail = doc.querySelector('meta[name="thumbnail"]')?.content;
+            if (!thumbnail) thumbnail = doc.querySelector('meta[property="og:image"]')?.content;
+            var title = doc.querySelector('meta[property="og:title"]')?.content;
+            var description = doc.querySelector('meta[property="og:description"]')?.content;
 
+            return {thumbnail, title, description};
+        }
 
-        // }
+        function initializeObserver() {
+            var responseBox = document.getElementById('response-box');
+            const observer = new MutationObserver(mutations => {
+                mutations.forEach(mutation => {
+                    // Asynchronously renders the UI of the card tags in the child nodes.
+                    mutation.addedNodes.forEach(renderCards);
+                });
+            });
+            observer.observe(responseBox, { childList: true });
+        }
 
-        // function highlightParagraph(node) {
-        //     node.querySelector('p')?.classList.add('highlight');
-        // }
-
-        // function renderCardUI(node) {
-        //     cards = Array.from(node.getElementsByTagName('card'));
-        //     promises = cards.map(async (card) => {
-        //         var url = card.innerText;
-        //         var {thumbnail, title, description} = await fetchMetadataForCard(url);
-
-        //         var div = document.createElement('div');
-        //         div.className = 'card';
-        //         div.innerHTML = `
-        //             <a href="${url}" target="_blank">
-        //                 <img class="thumbnail" src="${thumbnail}" alt="${title}">
-        //                 <div class="title"><strong>${title}</strong></div>
-        //                 <div class="description">${description}</div>
-        //             </a>`;
-        //         card.parentNode.replaceChild(div, card);
-        //     });
-
-        //     await Promise.all(promises).then(() => {
-        //         responseBox.scrollTop = responseBox.scrollHeight;
-        //     });
-        // }
-
-        // async function fetchMetadataForCard(url) {
-        //     const response = await fetch(url);
-        //     const text = await response.text();
-        //     const parser = new DOMParser();
-        //     const doc = parser.parseFromString(text, 'text/html');
-
-        //     var thumbnail = doc.querySelector('meta[name="thumbnail"]')?.content;
-        //     if (!thumbnail) thumbnail = doc.querySelector('meta[property="og:image"]')?.content;
-        //     var title = doc.querySelector('meta[property="og:title"]')?.content;
-        //     var description = doc.querySelector('meta[property="og:description"]')?.content;
-
-        //     return {thumbnail, title, description};
-        // }
-
-        // async function createProductElement(url) {
-        //     const response = await fetch(url);
-        //     const text = await response.text();
-        //     const parser = new DOMParser();
-        //     const doc = parser.parseFromString(text, 'text/html');
-
-        //     var thumbnail = doc.querySelector('meta[name="thumbnail"]')?.content;
-        //     if (!thumbnail) thumbnail = doc.querySelector('meta[property="og:image"]')?.content;
-        //     var title = doc.querySelector('meta[property="og:title"]')?.content;
-        //     var description = doc.querySelector('meta[property="og:description"]')?.content;
-
-        //     var div = document.createElement('div');
-        //     div.className = 'product-card';
-        //     div.innerHTML = `
-        //         <a href="${url}" target="_blank">
-        //             <img class="thumbnail" src="${thumbnail}" alt="${title}">
-        //             <div class="title"><strong>${title}</strong></div>
-        //             <div class="description">${description}</div>
-        //         </a>`;
-            
-        //     return div;
-        // }
-
-        // function initializeObserver() {
-        //     var responseBox = document.getElementById('response-box');
-        //     const observer = new MutationObserver(mutations => {
-        //         mutations.forEach(mutation => {
-        //             mutation.addedNodes.forEach(node => {
-        //                 node.querySelector('p')?.classList?.add('styled-paragraph');
-
-        //                 Array.from(node.getElementsByTagName('product')).forEach(node => {
-        //                     createProductElement(node.innerText).then(div => {
-        //                         node.parentNode.replaceChild(div, node);
-        //                         responseBox.scrollTop = responseBox.scrollHeight;
-        //                     })
-        //                 });
-        //             });
-        //         });
-        //     });
-
-        //     observer.observe(responseBox, { childList: true });
-        // }
-
-        // initializeObserver();
+        initializeObserver();
     </script>
 </body>
 </html>
