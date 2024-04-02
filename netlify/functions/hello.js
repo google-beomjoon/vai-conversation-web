@@ -15,8 +15,9 @@ const path = require('path');
 
 export default async (request, context) => {
 	try {
-		const json = fs.readFileSync(path.join(__dirname, 'data', 'scen1-markdown.json'));
-		return Response.json({ res: json });
+		const filePath = path.join(__dirname, 'data', 'scen1-markdown.json');
+		const data = fs.readFileSync(filePath, 'utf-8');
+		return Response.json({ res: data });
 	} catch (error) {
 		return Response.json({ error }, { status: 500 });
 	}
