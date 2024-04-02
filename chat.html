@@ -56,19 +56,38 @@
         }
 
         #response-box table {
-            border-collapse: collapse;
-            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
         }
 
-        #response-box table, 
         #response-box th, 
         #response-box td {
-            border: 1px solid black;
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            background-color: #ffffff;
         }
 
         #response-box th {
+            background-color: #f2f2f2; 
+            color: #333;
             font-weight: bold;
-            background-color: #f2f2f2;
+        }
+
+        #response-box th:first-child {
+            border-top-left-radius: 15px;
+        }
+
+        #response-box th:last-child {
+            border-top-right-radius: 15px;
+        }
+
+        #response-box tr:last-child td:first-child {
+            border-bottom-left-radius: 15px;
+        }
+
+        #response-box tr:last-child td:last-child {
+            border-bottom-right-radius: 15px;
         }
 
         #response-box .user, 
