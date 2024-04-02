@@ -292,7 +292,7 @@
         }
 
         async function renderCards(node) {
-            cards = Array.from(node.getElementsByTagName('card'));
+            cards = Array.from(node.getElementsByTagName('link'));
             cards.forEach(async (card) => {
                 const url = card.innerText;
                 // Fetches some metadata from the URL and dynamically renders the card UI
